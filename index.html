@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flag Frenzy: Global Agent</title>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Basic Reset & Font */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto; /* Allow scrolling if content is tall */
+        }
+
+        /* Utility Class for Hiding Elements */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Main Container Styling */
+        .game-container {
+            background-color: #2d3748; /* Slightly lighter dark background for card */
+            border-radius: 1rem; /* Rounded corners */
+            padding: 2.5rem; /* Ample padding */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* Soft shadow */
+            text-align: center;
+            width: 100%;
+            max-width: 600px; /* Max width for readability on larger screens */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* Space between sections */
+            animation: fadeIn 0.8s ease-out; /* Fade in animation */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Title */
+        h1 {
+            font-size: 2.5rem; /* Large title */
+            font-weight: 800; /* Extra bold */
+            color: #f6e05e; /* Yellow accent color */
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Info Bar (Score, Lives, Mission Progress) */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #4a5568; /* Subtle separator */
+            margin-bottom: 1.5rem;
+        }
+
+        .info-bar .score, .info-bar .lives {
+            color: #68d391; /* Green for positive info */
+        }
+        .info-bar .lives.low {
+            color: #fc8181; /* Red for low lives */
+        }
+
+        /* Narrative Text Area */
+        #narrative-text, #extended-intro-narrative, #initial-intro-text {
+            background-color: #1a202c;
+            border: 1px solid #4a5568;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+            text-align: left;
+            min-height: 80px; /* Ensure space for text */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.5;
+            color: #cbd5e0;
+            font-size: 1rem; /* Adjusted for mobile readability */
+        }
+
+        /* Flag Image */
+        #flag-display {
+            width: 100%;
+            max-width: 300px; /* Max width for flag */
+            height: auto;
+            border: 3px solid #4a5568; /* Border around flag */
+            border-radius: 0.75rem; /* Rounded corners for flag */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            margin: 0 auto 2rem auto; /* Center and add margin below */
+            display: block; /* Ensures proper centering */
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column for mobile */
+            gap: 1rem; /* Space between buttons */
+        }
+
+        @media (min-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr 1fr; /* Two columns for wider screens */
+            }
+        }
+
+        /* Buttons (General Styling) */
+        .game-button {
+            background-color: #4299e1; /* Blue button */
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem; /* Rounded buttons */
+            font-size: 1.1rem; /* Good touch target size */
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            outline: none; /* Remove outline on focus */
+            width: 100%; /* Ensure buttons take full width in grid */
+        }
+
+        .game-button:hover:not(:disabled) {
+            background-color: #3182ce; /* Darker blue on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Specific Button Colors */
+        .start-button {
+            background-color: #68d391; /* Green start button */
+        }
+        .start-button:hover {
+            background-color: #48bb78;
+        }
+
+        .retry-button {
+            background-color: #f6ad55; /* Orange retry button */
+        }
+        .retry-button:hover {
+            background-color: #ed8936;
+        }
+
+        .next-button {
+            background-color: #4299e1; /* Blue next button */
+        }
+        .next-button:hover {
+            background-color: #3182ce;
+        }
+
+        /* Feedback Message */
+        #feedback-message {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-top: 1.5rem;
+            min-height: 2rem; /* Reserve space to prevent layout shift */
+        }
+
+        .feedback-correct {
+            color: #68d391; /* Green */
+        }
+
+        .feedback-incorrect {
+            color: #fc8181; /* Red */
+        }
+
+        /* Button feedback colors */
+        .option-button.correct-answer {
+            background-color: #38a169; /* Darker green for correct button */
+        }
+
+        .option-button.incorrect-selection {
+            background-color: #e53e3e; /* Darker red for incorrect selected button */
+        }
+
+        /* Game Over / Mission Complete/Fail Screens */
+        .overlay-screen {
+            background-color: #2d3748;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .overlay-screen h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #f6e05e;
+            margin-bottom: 1rem;
+        }
+
+        .overlay-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .overlay-screen .score-summary {
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .overlay-screen .score-summary .correct {
+            color: #68d391;
+            font-weight: 600;
+        }
+
+        .overlay-screen .score-summary .incorrect {
+            color: #fc8181;
+            font-weight: 600;
+        }
+
+        /* Agent Name Input Styling */
+        #agent-name-input {
+            width: calc(100% - 2rem); /* Full width minus padding */
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #4a5568;
+            border-radius: 0.5rem;
+            background-color: #1a202c;
+            color: #e2e8f0;
+            font-size: 1.1rem;
+            text-align: center;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        #agent-name-input::placeholder {
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Initial Credit Screen -->
+    <div id="initial-credit-screen" class="game-container">
+        <h1>Flag Frenzy: Global Agent</h1>
+        <p id="credit-text" class="text-lg italic text-gray-300 mb-4">
+            A game by Kyran Fernandes.
+        </p>
+        <button id="proceed-to-intro-button" class="game-button start-button">Start Game</button>
+    </div>
+
+    <!-- Intro Screen (now for agent name input and extended narrative) -->
+    <div id="intro-screen" class="game-container hidden">
+        <h1>Flag Frenzy: Global Agent</h1>
+        <p id="initial-intro-text" class="text-lg italic text-gray-300">
+            Welcome, Agent! The world faces a critical juncture. Your expertise is desperately needed.
+        </p>
+        <input type="text" id="agent-name-input" placeholder="Enter your Agent Name">
+        <button id="start-game-button" class="game-button start-button">Begin Assignment</button>
+
+        <!-- Extended intro narrative, shown after agent name input -->
+        <div id="extended-intro-content" class="hidden">
+            <p id="extended-intro-narrative" class="text-lg italic text-gray-300 mb-4 text-left"></p>
+            <button id="continue-intro-button" class="game-button next-button">Continue</button>
+        </div>
+    </div>
+
+    <!-- Mission Briefing Screen -->
+    <div id="mission-briefing-screen" class="overlay-screen hidden">
+        <h2 id="mission-briefing-title"></h2>
+        <p id="mission-briefing-text"></p>
+        <button id="start-mission-button" class="game-button next-button">Proceed to Mission</button>
+    </div>
+
+    <!-- Main Game Screen -->
+    <div id="game-screen" class="game-container hidden">
+        <h1>Flag Frenzy</h1>
+        <div class="info-bar">
+            <p>Score: <span id="score-display">0</span></p>
+            <p>Lives: <span id="lives-display" class="lives">3</span></p>
+            <p>Mission Progress: <span id="mission-progress-display">0</span> / <span id="mission-total-flags">5</span></p>
+        </div>
+
+        <!-- This narrative text will display in-game messages during quiz -->
+        <div id="narrative-text"></div>
+
+        <img id="flag-display" src="" alt="Country Flag" onerror="this.onerror=null;this.src='https://placehold.co/320x200/4a5568/e2e8f0?text=Flag+Not+Found';">
+        
+        <div id="options-container" class="options-grid">
+            <!-- Buttons will be injected here by JavaScript -->
+        </div>
+
+        <p id="feedback-message"></p>
+    </div>
+
+    <!-- Mission Outcome Screen (Success/Failure) -->
+    <div id="mission-outcome-screen" class="overlay-screen hidden">
+        <h2 id="mission-outcome-title"></h2>
+        <p id="mission-outcome-text"></p>
+        <button id="mission-outcome-button" class="game-button"></button>
+    </div>
+
+    <!-- Game Over Screen (Overall Game End) -->
+    <div id="game-over-screen" class="overlay-screen hidden">
+        <h2>Assignment Complete!</h2>
+        <p id="final-game-narrative"></p>
+        <div class="score-summary">
+            <p>Total Correct Flags: <span id="final-correct-count" class="correct">0</span></p>
+            <p>Total Incorrect Flags: <span id="final-incorrect-count" class="incorrect">0</span></p>
+        </div>
+        <button id="play-again-button" class="game-button start-button">Re-embark on Assignment</button>
+    </div>
+
+    <script>
+        // Array of flags with country names, image URLs, and continent
+        const flags = [
+            { country: "Afghanistan", url: "https://flagcdn.com/w320/af.png", continent: "Asia" },
+            { country: "Albania", url: "https://flagcdn.com/w320/al.png", continent: "Europe" },
+            { country: "Algeria", url: "https://flagcdn.com/w320/dz.png", continent: "Africa" },
+            { country: "Andorra", url: "https://flagcdn.com/w320/ad.png", continent: "Europe" },
+            { country: "Angola", url: "https://flagcdn.com/w320/ao.png", continent: "Africa" },
+            { country: "Antigua and Barbuda", url: "https://flagcdn.com/w320/ag.png", continent: "North America" },
+            { country: "Argentina", url: "https://flagcdn.com/w320/ar.png", continent: "South America" },
+            { country: "Armenia", url: "https://flagcdn.com/w320/am.png", continent: "Asia" },
+            { country: "Australia", url: "https://flagcdn.com/w320/au.png", continent: "Oceania" },
+            { country: "Austria", url: "https://flagcdn.com/w320/at.png", continent: "Europe" },
+            { country: "Azerbaijan", url: "https://flagcdn.com/w320/az.png", continent: "Asia" },
+            { country: "Bahamas", url: "https://flagcdn.com/w320/bs.png", continent: "North America" },
+            { country: "Bahrain", url: "https://flagcdn.com/w320/bh.png", continent: "Asia" },
+            { country: "Bangladesh", url: "https://flagcdn.com/w320/bd.png", continent: "Asia" },
+            { country: "Barbados", url: "https://flagcdn.com/w320/bb.png", continent: "North America" },
+            { country: "Belarus", url: "https://flagcdn.com/w320/by.png", continent: "Europe" },
+            { country: "Belgium", url: "https://flagcdn.com/w320/be.png", continent: "Europe" },
+            { country: "Belize", url: "https://flagcdn.com/w320/bz.png", continent: "North America" },
+            { country: "Benin", url: "https://flagcdn.com/w320/bj.png", continent: "Africa" },
+            { country: "Bhutan", url: "https://flagcdn.com/w320/bt.png", continent: "Asia" },
+            { country: "Bolivia", url: "https://flagcdn.com/w320/bo.png", continent: "South America" },
+            { country: "Bosnia and Herzegovina", url: "https://flagcdn.com/w320/ba.png", continent: "Europe" },
+            { country: "Botswana", url: "https://flagcdn.com/w320/bw.png", continent: "Africa" },
+            { country: "Brazil", url: "https://flagcdn.com/w320/br.png", continent: "South America" },
+            { country: "Brunei", url: "https://flagcdn.com/w320/bn.png", continent: "Asia" },
+            { country: "Bulgaria", url: "https://flagcdn.com/w320/bg.png", continent: "Europe" },
+            { country: "Burkina Faso", url: "https://flagcdn.com/w320/bf.png", continent: "Africa" },
+            { country: "Burundi", url: "https://flagcdn.com/w320/bi.png", continent: "Africa" },
+            { country: "Cabo Verde", url: "https://flagcdn.com/w320/cv.png", continent: "Africa" },
+            { country: "Cambodia", url: "https://flagcdn.com/w320/kh.png", continent: "Asia" },
+            { country: "Cameroon", url: "https://flagcdn.com/w320/cm.png", continent: "Africa" },
+            { country: "Canada", url: "https://flagcdn.com/w320/ca.png", continent: "North America" },
+            { country: "Central African Republic", url: "https://flagcdn.com/w320/cf.png", continent: "Africa" },
+            { country: "Chad", url: "https://flagcdn.com/w320/td.png", continent: "Africa" },
+            { country: "Chile", url: "https://flagcdn.com/w320/cl.png", continent: "South America" },
+            { country: "China", url: "https://flagcdn.com/w320/cn.png", continent: "Asia" },
+            { country: "Colombia", url: "https://flagcdn.com/w320/co.png", continent: "South America" },
+            { country: "Comoros", url: "https://flagcdn.com/w320/km.png", continent: "Africa" },
+            { country: "Congo (Congo-Brazzaville)", url: "https://flagcdn.com/w320/cg.png", continent: "Africa" },
+            { country: "Costa Rica", url: "https://flagcdn.com/w320/cr.png", continent: "North America" },
+            { country: "Croatia", url: "https://flagcdn.com/w320/hr.png", continent: "Europe" },
+            { country: "Cuba", url: "https://flagcdn.com/w320/cu.png", continent: "North America" },
+            { country: "Cyprus", url: "https://flagcdn.com/w320/cy.png", continent: "Asia" },
+            { country: "Czechia", url: "https://flagcdn.com/w320/cz.png", continent: "Europe" },
+            { country: "Democratic Republic of the Congo", url: "https://flagcdn.com/w320/cd.png", continent: "Africa" },
+            { country: "Denmark", url: "https://flagcdn.com/w320/dk.png", continent: "Europe" },
+            { country: "Djibouti", url: "https://flagcdn.com/w320/dj.png", continent: "Africa" },
+            { country: "Dominica", url: "https://flagcdn.com/w320/dm.png", continent: "North America" },
+            { country: "Dominican Republic", url: "https://flagcdn.com/w320/do.png", continent: "North America" },
+            { country: "Ecuador", url: "https://flagcdn.com/w320/ec.png", continent: "South America" },
+            { country: "Egypt", url: "https://flagcdn.com/w320/eg.png", continent: "Africa" },
+            { country: "El Salvador", url: "https://flagcdn.com/w320/sv.png", continent: "North America" },
+            { country: "Equatorial Guinea", url: "https://flagcdn.com/w320/gq.png", continent: "Africa" },
+            { country: "Eritrea", url: "https://flagcdn.com/w320/er.png", continent: "Africa" },
+            { country: "Estonia", url: "https://flagcdn.com/w320/ee.png", continent: "Europe" },
+            { country: "Eswatini", url: "https://flagcdn.com/w320/sz.png", continent: "Africa" },
+            { country: "Ethiopia", url: "https://flagcdn.com/w320/et.png", continent: "Africa" },
+            { country: "Fiji", url: "https://flagcdn.com/w320/fj.png", continent: "Oceania" },
+            { country: "Finland", url: "https://flagcdn.com/w320/fi.png", continent: "Europe" },
+            { country: "France", url: "https://flagcdn.com/w320/fr.png", continent: "Europe" },
+            { country: "Gabon", url: "https://flagcdn.com/w320/ga.png", continent: "Africa" },
+            { country: "Gambia", url: "https://flagcdn.com/w320/gm.png", continent: "Africa" },
+            { country: "Georgia", url: "https://flagcdn.com/w320/ge.png", continent: "Asia" },
+            { country: "Germany", url: "https://flagcdn.com/w320/de.png", continent: "Europe" },
+            { country: "Ghana", url: "https://flagcdn.com/w320/gh.png", continent: "Africa" },
+            { country: "Greece", url: "https://flagcdn.com/w320/gr.png", continent: "Europe" },
+            { country: "Grenada", url: "https://flagcdn.com/w320/gd.png", continent: "North America" },
+            { country: "Guatemala", url: "https://flagcdn.com/w320/gt.png", continent: "North America" },
+            { country: "Guinea", url: "https://flagcdn.com/w320/gn.png", continent: "Africa" },
+            { country: "Guinea-Bissau", url: "https://flagcdn.com/w320/gw.png", continent: "Africa" },
+            { country: "Guyana", url: "https://flagcdn.com/w320/gy.png", continent: "South America" },
+            { country: "Haiti", url: "https://flagcdn.com/w320/ht.png", continent: "North America" },
+            { country: "Honduras", url: "https://flagcdn.com/w320/hn.png", continent: "North America" },
+            { country: "Hungary", url: "https://flagcdn.com/w320/hu.png", continent: "Europe" },
+            { country: "Iceland", url: "https://flagcdn.com/w320/is.png", continent: "Europe" },
+            { country: "India", url: "https://flagcdn.com/w320/in.png", continent: "Asia" },
+            { country: "Indonesia", url: "https://flagcdn.com/w320/id.png", continent: "Asia" },
+            { country: "Iran", url: "https://flagcdn.com/w320/ir.png", continent: "Asia" },
+            { country: "Iraq", url: "https://flagcdn.com/w320/iq.png", continent: "Asia" },
+            { country: "Ireland", url: "https://flagcdn.com/w320/ie.png", continent: "Europe" },
+            { country: "Israel", url: "https://flagcdn.com/w320/il.png", continent: "Asia" },
+            { country: "Italy", url: "https://flagcdn.com/w320/it.png", continent: "Europe" },
+            { country: "Jamaica", url: "https://flagcdn.com/w320/jm.png", continent: "North America" },
+            { country: "Japan", url: "https://flagcdn.com/w320/jp.png", continent: "Asia" },
+            { country: "Jordan", url: "https://flagcdn.com/w320/jo.png", continent: "Asia" },
+            { country: "Kazakhstan", url: "https://flagcdn.com/w320/kz.png", continent: "Asia" },
+            { country: "Kenya", url: "https://flagcdn.com/w320/ke.png", continent: "Africa" },
+            { country: "Kiribati", url: "https://flagcdn.com/w320/ki.png", continent: "Oceania" },
+            { country: "Kuwait", url: "https://flagcdn.com/w320/kw.png", continent: "Asia" },
+            { country: "Kyrgyzstan", url: "https://flagcdn.com/w320/kg.png", continent: "Asia" },
+            { country: "Laos", url: "https://flagcdn.com/w320/la.png", continent: "Asia" },
+            { country: "Latvia", url: "https://flagcdn.com/w320/lv.png", continent: "Europe" },
+            { country: "Lebanon", url: "https://flagcdn.com/w320/lb.png", continent: "Asia" },
+            { country: "Lesotho", url: "https://flagcdn.com/w320/ls.png", continent: "Africa" },
+            { country: "Liberia", url: "https://flagcdn.com/w320/lr.png", continent: "Africa" },
+            { country: "Libya", url: "https://flagcdn.com/w320/ly.png", continent: "Africa" },
+            { country: "Liechtenstein", url: "https://flagcdn.com/w320/li.png", continent: "Europe" },
+            { country: "Lithuania", url: "https://flagcdn.com/w320/lt.png", continent: "Europe" },
+            { country: "Luxembourg", url: "https://flagcdn.com/w320/lu.png", continent: "Europe" },
+            { country: "Madagascar", url: "https://flagcdn.com/w320/mg.png", continent: "Africa" },
+            { country: "Malawi", url: "https://flagcdn.com/w320/mw.png", continent: "Africa" },
+            { country: "Malaysia", url: "https://flagcdn.com/w320/my.png", continent: "Asia" },
+            { country: "Maldives", url: "https://flagcdn.com/w320/mv.png", continent: "Asia" },
+            { country: "Mali", url: "https://flagcdn.com/w320/ml.png", continent: "Africa" },
+            { country: "Malta", url: "https://flagcdn.com/w320/mt.png", continent: "Europe" },
+            { country: "Marshall Islands", url: "https://flagcdn.com/w320/mh.png", continent: "Oceania" },
+            { country: "Mauritania", url: "https://flagcdn.com/w320/mr.png", continent: "Africa" },
+            { country: "Mauritius", url: "https://flagcdn.com/w320/mu.png", continent: "Africa" },
+            { country: "Mexico", url: "https://flagcdn.com/w320/mx.png", continent: "North America" },
+            { country: "Micronesia", url: "https://flagcdn.com/w320/fm.png", continent: "Oceania" },
+            { country: "Moldova", url: "https://flagcdn.com/w320/md.png", continent: "Europe" },
+            { country: "Monaco", url: "https://flagcdn.com/w320/mc.png", continent: "Europe" },
+            { country: "Mongolia", url: "https://flagcdn.com/w320/mn.png", continent: "Asia" },
+            { country: "Montenegro", url: "https://flagcdn.com/w320/me.png", continent: "Europe" },
+            { country: "Morocco", url: "https://flagcdn.com/w320/ma.png", continent: "Africa" },
+            { country: "Mozambique", url: "https://flagcdn.com/w320/mz.png", continent: "Africa" },
+            { country: "Myanmar", url: "https://flagcdn.com/w320/mm.png", continent: "Asia" },
+            { country: "Namibia", url: "https://flagcdn.com/w320/na.png", continent: "Africa" },
+            { country: "Nauru", url: "https://flagcdn.com/w320/nr.png", continent: "Oceania" },
+            { country: "Nepal", url: "https://flagcdn.com/w320/np.png", continent: "Asia" },
+            { country: "Netherlands", url: "https://flagcdn.com/w320/nl.png", continent: "Europe" },
+            { country: "New Zealand", url: "https://flagcdn.com/w320/nz.png", continent: "Oceania" },
+            { country: "Nicaragua", url: "https://flagcdn.com/w320/ni.png", continent: "North America" },
+            { country: "Niger", url: "https://flagcdn.com/w320/ne.png", continent: "Africa" },
+            { country: "Nigeria", url: "https://flagcdn.com/w320/ng.png", continent: "Africa" },
+            { country: "North Korea", url: "https://flagcdn.com/w320/kp.png", continent: "Asia" },
+            { country: "North Macedonia", url: "https://flagcdn.com/w320/mk.png", continent: "Europe" },
+            { country: "Norway", url: "https://flagcdn.com/w320/no.png", continent: "Europe" },
+            { country: "Oman", url: "https://flagcdn.com/w320/om.png", continent: "Asia" },
+            { country: "Pakistan", url: "https://flagcdn.com/w320/pk.png", continent: "Asia" },
+            { country: "Palau", url: "https://flagcdn.com/w320/pw.png", continent: "Oceania" },
+            { country: "Palestine", url: "https://flagcdn.com/w320/ps.png", continent: "Asia" },
+            { country: "Panama", url: "https://flagcdn.com/w320/pa.png", continent: "North America" },
+            { country: "Papua New Guinea", url: "https://flagcdn.com/w320/pg.png", continent: "Oceania" },
+            { country: "Paraguay", url: "https://flagcdn.com/w320/py.png", continent: "South America" },
+            { country: "Peru", url: "https://flagcdn.com/w320/pe.png", continent: "South America" },
+            { country: "Philippines", url: "https://flagcdn.com/w320/ph.png", continent: "Asia" },
+            { country: "Poland", url: "https://flagcdn.com/w320/pl.png", continent: "Europe" },
+            { country: "Portugal", url: "https://flagcdn.com/w320/pt.png", continent: "Europe" },
+            { country: "Qatar", url: "https://flagcdn.com/w320/qa.png", continent: "Asia" },
+            { country: "Romania", url: "https://flagcdn.com/w320/ro.png", continent: "Europe" },
+            { country: "Russia", url: "https://flagcdn.com/w320/ru.png", continent: "Europe" },
+            { country: "Rwanda", url: "https://flagcdn.com/w320/rw.png", continent: "Africa" },
+            { country: "Saint Kitts and Nevis", url: "https://flagcdn.com/w320/kn.png", continent: "North America" },
+            { country: "Saint Lucia", url: "https://flagcdn.com/w320/lc.png", continent: "North America" },
+            { country: "Saint Vincent and the Grenadines", url: "https://flagcdn.com/w320/vc.png", continent: "North America" },
+            { country: "Samoa", url: "https://flagcdn.com/w320/ws.png", continent: "Oceania" },
+            { country: "San Marino", url: "https://flagcdn.com/w320/sm.png", continent: "Europe" },
+            { country: "Sao Tome and Principe", url: "https://flagcdn.com/w320/st.png", continent: "Africa" },
+            { country: "Saudi Arabia", url: "https://flagcdn.com/w320/sa.png", continent: "Asia" },
+            { country: "Senegal", url: "https://flagcdn.com/w320/sn.png", continent: "Africa" },
+            { country: "Serbia", url: "https://flagcdn.com/w320/rs.png", continent: "Europe" },
+            { country: "Seychelles", url: "https://flagcdn.com/w320/sc.png", continent: "Africa" },
+            { country: "Sierra Leone", url: "https://flagcdn.com/w320/sl.png", continent: "Africa" },
+            { country: "Singapore", url: "https://flagcdn.com/w320/sg.png", continent: "Asia" },
+            { country: "Slovakia", url: "https://flagcdn.com/w320/sk.png", continent: "Europe" },
+            { country: "Slovenia", url: "https://flagcdn.com/w320/si.png", continent: "Europe" },
+            { country: "Solomon Islands", url: "https://flagcdn.com/w320/sb.png", continent: "Oceania" },
+            { country: "Somalia", url: "https://flagcdn.com/w320/so.png", continent: "Africa" },
+            { country: "South Africa", url: "https://flagcdn.com/w320/za.png", continent: "Africa" },
+            { country: "South Korea", url: "https://flagcdn.com/w320/kr.png", continent: "Asia" },
+            { country: "South Sudan", url: "https://flagcdn.com/w320/ss.png", continent: "Africa" },
+            { country: "Spain", url: "https://flagcdn.com/w320/es.png", continent: "Europe" },
+            { country: "Sri Lanka", url: "https://flagcdn.com/w320/lk.png", continent: "Asia" },
+            { country: "Sudan", url: "https://flagcdn.com/w320/sd.png", continent: "Africa" },
+            { country: "Suriname", url: "https://flagcdn.com/w320/sr.png", continent: "South America" },
+            { country: "Sweden", url: "https://flagcdn.com/w320/se.png", continent: "Europe" },
+            { country: "Switzerland", url: "https://flagcdn.com/w320/ch.png", continent: "Europe" },
+            { country: "Syria", url: "https://flagcdn.com/w320/sy.png", continent: "Asia" },
+            { country: "Tajikistan", url: "https://flagcdn.com/w320/tj.png", continent: "Asia" },
+            { country: "Tanzania", url: "https://flagcdn.com/w320/tz.png", continent: "Africa" },
+            { country: "Thailand", url: "https://flagcdn.com/w320/th.png", continent: "Asia" },
+            { country: "Timor-Leste", url: "https://flagcdn.com/w320/tl.png", continent: "Asia" },
+            { country: "Togo", url: "https://flagcdn.com/w320/tg.png", continent: "Africa" },
+            { country: "Tonga", url: "https://flagcdn.com/w320/to.png", continent: "Oceania" },
+            { country: "Trinidad and Tobago", url: "https://flagcdn.com/w320/tt.png", continent: "North America" },
+            { country: "Tunisia", url: "https://flagcdn.com/w320/tn.png", continent: "Africa" },
+            { country: "Turkey", url: "https://flagcdn.com/w320/tr.png", continent: "Asia" },
+            { country: "Turkmenistan", url: "https://flagcdn.com/w320/tm.png", continent: "Asia" },
+            { country: "Tuvalu", url: "https://flagcdn.com/w320/tv.png", continent: "Oceania" },
+            { country: "Uganda", url: "https://flagcdn.com/w320/ug.png", continent: "Africa" },
+            { country: "Ukraine", url: "https://flagcdn.com/w320/ua.png", continent: "Europe" },
+            { country: "United Arab Emirates", url: "https://flagcdn.com/w320/ae.png", continent: "Asia" },
+            { country: "United Kingdom", url: "https://flagcdn.com/w320/gb.png", continent: "Europe" },
+            { country: "United States of America", url: "https://flagcdn.com/w320/us.png", continent: "North America" },
+            { country: "Uruguay", url: "https://flagcdn.com/w320/uy.png", continent: "South America" },
+            { country: "Uzbekistan", url: "https://flagcdn.com/w320/uz.png", continent: "Asia" },
+            { country: "Vanuatu", url: "https://flagcdn.com/w320/vu.png", continent: "Oceania" },
+            { country: "Venezuela", url: "https://flagcdn.com/w320/ve.png", continent: "South America" },
+            { country: "Vietnam", url: "https://flagcdn.com/w320/vn.png", continent: "Asia" },
+            { country: "Yemen", url: "https://flagcdn.com/w320/ye.png", continent: "Asia" },
+            { country: "Zambia", url: "https://flagcdn.com/w320/zm.png", continent: "Africa" },
+            { country: "Zimbabwe", url: "https://flagcdn.com/w320/zw.png", continent: "Africa" }
+        ];
+
+        // Define the missions for the story-based game
+        const missions = [
+            {
+                id: 'intro_credit', // New ID for the initial credit screen
+                type: 'narrative',
+                text: (agentName) => `A game by Kyran Fernandes.`,
+                nextMissionId: 'intro' // Points to the actual game intro
+            },
+            {
+                id: 'intro', // This is the actual game intro, after name input
+                type: 'narrative',
+                text: (agentName) => `Welcome, Agent ${agentName}! Your journey into the elite ranks of the Global Flag Identification Unit begins now. The world is a complex tapestry of cultures and geopolitical landscapes, all symbolized by their national flags. Misidentification can lead to chaos. Your expertise is a strategic imperative. Each mission will test your knowledge and precision under pressure. From Europe to Oceania, your keen eye will be key to global stability. Are you ready to embrace your destiny as a guardian of international order? The fate of nations rests on your shoulders.`,
+                nextMissionId: 'mission1' // This will be the first quiz mission
+            },
+            {
+                id: 'mission1',
+                type: 'quiz',
+                title: 'Operation: European Unity',
+                briefing: (agentName) => `Agent ${agentName}, your first assignment: Europe. A crucial summit is underway, but a rogue faction has scrambled key identifiers. Identify 5 flags from European nations to restore communication and ensure the summit's success. You have 3 lives. Your precision is paramount.`,
+                continent: 'Europe',
+                flagsRequired: 5,
+                initialLives: 3,
+                successMessage: (agentName) => `Excellent work, Agent ${agentName}! European communications are restored. Prepare for your next assignment in Asia.`,
+                failureMessage: (agentName) => `Mission failed, Agent ${agentName}. The European summit remains in disarray. You must retry this mission.`,
+                nextMissionId: 'mission2'
+            },
+            {
+                id: 'mission2',
+                type: 'quiz',
+                title: 'Project: Silk Road Revival',
+                briefing: (agentName) => `Agent ${agentName}, next: Asia. Vital trade negotiations are collapsing due to disinformation using manipulated flag imagery. Identify 5 flags from key Asian nations to verify trade routes and secure agreements. You have 3 lives. Accuracy is crucial for global prosperity.`,
+                continent: 'Asia',
+                flagsRequired: 5,
+                initialLives: 3,
+                successMessage: (agentName) => `Trade negotiations concluded! Your skills opened new economic corridors across Asia. Now, for the Americas.`,
+                failureMessage: (agentName) => `Trade negotiations stalled, Agent ${agentName}. Retry the Asian mission.`,
+                nextMissionId: 'mission3'
+            },
+            {
+                id: 'mission3',
+                type: 'quiz',
+                title: 'Initiative: New World Harmony',
+                briefing: (agentName) => `Agent ${agentName}, to the Americas. A Pan-American Alliance is threatened by faked diplomatic credentials. Identify 5 flags from North or South American countries to validate delegates and secure this alliance. You have 3 lives. Your precision ensures regional stability.`,
+                continent: ['North America', 'South America'],
+                flagsRequired: 5,
+                initialLives: 3,
+                successMessage: (agentName) => `The Americas are united! You are a master of flags. Your next challenge awaits in Africa.`,
+                failureMessage: (agentName) => `The alliance faltered, Agent ${agentName}. Reattempt the American mission.`,
+                nextMissionId: 'mission4_africa'
+            },
+            {
+                id: 'mission4_africa',
+                type: 'quiz',
+                title: 'Operation: African Renaissance',
+                briefing: (agentName) => `Agent ${agentName}, your next assignment: Africa. A vital humanitarian aid convoy is missing, diverted by false flag signals. Identify 5 flags from African nations to pinpoint the convoy's location and ensure its safe passage. You have 3 lives. Your knowledge is their last hope.`,
+                continent: 'Africa',
+                flagsRequired: 5,
+                initialLives: 3,
+                successMessage: (agentName) => `Convoy secured, Agent ${agentName}! Aid reaches its destination. Now, prepare for Oceania.`,
+                failureMessage: (agentName) => `The convoy remains missing, Agent ${agentName}. Retry this mission.`,
+                nextMissionId: 'mission5_oceania'
+            },
+            {
+                id: 'mission5_oceania',
+                type: 'quiz',
+                title: 'Expedition: Pacific Guardians',
+                briefing: (agentName) => `Agent ${agentName}, to Oceania. Sacred artifacts, crucial for ecological balance, are stolen. Thieves use obscure island flags as markers. Identify 5 flags from Oceanic nations to recover these artifacts and prevent ecological disaster. You have 3 lives. The Pacific's future depends on you.`,
+                continent: 'Oceania',
+                flagsRequired: 5,
+                initialLives: 3,
+                successMessage: (agentName) => `Artifacts recovered, Agent ${agentName}! The Pacific is safe. Prepare for the ultimate test: The Grand Global Accord.`,
+                failureMessage: (agentName) => `The artifacts remain lost, Agent ${agentName}. Reattempt the Oceanic mission.`,
+                nextMissionId: 'finalMission_global'
+            },
+            {
+                id: 'finalMission_global',
+                type: 'quiz',
+                title: 'The Grand Global Accord',
+                briefing: (agentName) => `Agent ${agentName}, the ultimate test. A global cyberattack, disguised by complex flag sequences, threatens world peace. Identify 7 flags from any continent to neutralize this threat and finalize the Global Peace Accord. You have 3 lives. The world depends on your mastery.`,
+                continent: 'Any',
+                flagsRequired: 7, // Increased for final challenge
+                initialLives: 3,
+                successMessage: (agentName) => `Victory, Agent ${agentName}! The Global Peace Accord is signed. Your unparalleled flag knowledge brought peace to the world. You are a legend!`,
+                failureMessage: (agentName) => `The accord failed, Agent ${agentName}. The world remains divided. You must retry this final mission.`,
+                nextMissionId: 'gameComplete'
+            },
+            {
+                id: 'gameComplete',
+                type: 'narrative',
+                text: (agentName) => `The world is safe, thanks to your unparalleled flag knowledge, Agent ${agentName}! Your journey as a Flag Master is complete. Your name will be etched in the annals of global security. Thank you for your extraordinary service!`,
+                nextMissionId: null // Indicates end of game
+            }
+        ];
+
+        // --- Global Game State Variables ---
+        let agentName = "Agent"; // This will be set by user input
+        const creatorName = "Kyran Fernandes"; // Fixed creator name
+        let currentMissionIndex = 0;
+        let currentMission = null;
+        let currentQuestion = null; // The flag object for the current question
+        let score = 0; // Total score across all missions
+        let lives = 0; // Lives for the current mission
+        let missionCorrectFlags = 0; // Correct flags identified in current mission
+        let hasAnswered = false; // Prevents multiple clicks on options
+        let askedFlagsInMission = []; // Flags already asked in the current mission
+        let totalCorrectFlagsOverall = 0;
+        let totalIncorrectFlagsOverall = 0;
+
+        // --- DOM Elements ---
+        const initialCreditScreen = document.getElementById('initial-credit-screen');
+        const creditText = document.getElementById('credit-text');
+        const proceedToIntroButton = document.getElementById('proceed-to-intro-button');
+
+        const introScreen = document.getElementById('intro-screen');
+        const agentNameInput = document.getElementById('agent-name-input');
+        const startGameButton = document.getElementById('start-game-button');
+        const initialIntroText = document.getElementById('initial-intro-text'); // The short intro text before extended
+        const extendedIntroContent = document.getElementById('extended-intro-content'); // Container for long intro
+        const extendedIntroNarrative = document.getElementById('extended-intro-narrative'); // Long intro text
+        const continueIntroButton = document.getElementById('continue-intro-button'); // Button for long intro
+
+        const missionBriefingScreen = document.getElementById('mission-briefing-screen');
+        const missionBriefingTitle = document.getElementById('mission-briefing-title');
+        const missionBriefingText = document.getElementById('mission-briefing-text');
+        const startMissionButton = document.getElementById('start-mission-button');
+
+        const gameScreen = document.getElementById('game-screen');
+        const scoreDisplayElement = document.getElementById('score-display');
+        const livesDisplay = document.getElementById('lives-display');
+        const missionProgressDisplay = document.getElementById('mission-progress-display');
+        const missionTotalFlagsDisplay = document.getElementById('mission-total-flags');
+        const narrativeTextDisplay = document.getElementById('narrative-text'); // For in-quiz narrative
+        const flagImageElement = document.getElementById('flag-display');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+
+        const missionOutcomeScreen = document.getElementById('mission-outcome-screen');
+        const missionOutcomeTitle = document.getElementById('mission-outcome-title');
+        const missionOutcomeText = document.getElementById('mission-outcome-text');
+        const missionOutcomeButton = document.getElementById('mission-outcome-button');
+
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalGameNarrative = document.getElementById('final-game-narrative');
+        const finalCorrectCount = document.getElementById('final-correct-count');
+        const finalIncorrectCount = document.getElementById('final-incorrect-count');
+        const playAgainButton = document.getElementById('play-again-button');
+
+        // --- Helper Functions ---
+
+        // Function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // Function to set screen visibility
+        function setScreen(screenToShow) {
+            initialCreditScreen.classList.add('hidden'); // Always hide the credit screen when changing
+            introScreen.classList.add('hidden');
+            missionBriefingScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            missionOutcomeScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+
+            screenToShow.classList.remove('hidden');
+        }
+
+        // --- Game Flow Functions ---
+
+        function initializeGame() {
+            score = 0;
+            totalCorrectFlagsOverall = 0;
+            totalIncorrectFlagsOverall = 0;
+            currentMissionIndex = 0;
+            agentNameInput.value = ""; // Clear name input on fresh start
+            agentName = "Agent"; // Reset agent name to default
+            
+            // Display the initial credit screen
+            creditText.textContent = missions[0].text(creatorName); // Use creatorName for the credit
+            setScreen(initialCreditScreen);
+        }
+
+        // Function to transition from credit screen to agent name input screen
+        function showAgentNameInputScreen() {
+            setScreen(introScreen);
+            // Ensure agent name input elements are visible
+            initialIntroText.classList.remove('hidden');
+            agentNameInput.classList.remove('hidden');
+            startGameButton.classList.remove('hidden');
+            extendedIntroContent.classList.add('hidden'); // Hide extended intro content initially
+
+            initialIntroText.textContent = `Welcome, Agent! The world faces a critical juncture. Your expertise is desperately needed.`;
+        }
+
+
+        function loadMission() {
+            currentMission = missions[currentMissionIndex];
+
+            if (!currentMission) {
+                console.error("No mission found at index:", currentMissionIndex);
+                showGameOverScreen(); // Fallback to game over if somehow no mission
+                return;
+            }
+
+            if (currentMission.type === 'narrative') {
+                if (currentMission.id === 'intro_credit') {
+                    // This is the very first screen, handled by initializeGame()
+                    // This branch should ideally not be hit after the initial load,
+                    // as proceedToIntroButton will directly move to showAgentNameInputScreen.
+                    // However, keeping for robustness.
+                    setScreen(initialCreditScreen);
+                    creditText.textContent = currentMission.text(creatorName);
+                } else if (currentMission.id === 'intro') {
+                    // This is the extended intro narrative after agent name input
+                    setScreen(introScreen);
+                    initialIntroText.classList.add('hidden'); // Hide the short intro text
+                    agentNameInput.classList.add('hidden'); // Hide name input
+                    startGameButton.classList.add('hidden'); // Hide "Begin Assignment" button
+
+                    extendedIntroContent.classList.remove('hidden'); // Show extended intro content
+                    extendedIntroNarrative.innerHTML = currentMission.text(agentName); // Use innerHTML for <br>
+                } else if (currentMission.id === 'gameComplete') {
+                    // Final narrative, leads to game over screen
+                    showGameOverScreen();
+                } else {
+                    // Other narrative missions (e.g., between quizzes) - these are short and auto-advance
+                    setScreen(gameScreen);
+                    narrativeTextDisplay.textContent = currentMission.text(agentName);
+                    flagImageElement.classList.add('hidden');
+                    optionsContainer.classList.add('hidden');
+                    feedbackMessage.classList.add('hidden');
+                    
+                    setTimeout(() => {
+                        currentMissionIndex++;
+                        loadMission(); 
+                    }, 4000); // Display narrative for 4 seconds
+                }
+            } else if (currentMission.type === 'quiz') {
+                showMissionBriefingScreen(); // Show the dedicated briefing screen for quiz missions
+            }
+        }
+
+        // Displays the briefing for a quiz mission on the dedicated briefing screen
+        function showMissionBriefingScreen() {
+            setScreen(missionBriefingScreen);
+            missionBriefingTitle.textContent = currentMission.title;
+            const briefingText = currentMission.briefing(agentName);
+            missionBriefingText.textContent = briefingText;
+        }
+
+        // Starts the actual quiz part of a mission, called from the briefing screen's button
+        function startQuizMission() {
+            setScreen(gameScreen); // Transition to the game screen
+            
+            // Show quiz elements
+            flagImageElement.classList.remove('hidden');
+            optionsContainer.classList.remove('hidden');
+            feedbackMessage.classList.remove('hidden');
+
+            lives = currentMission.initialLives;
+            missionCorrectFlags = 0;
+            askedFlagsInMission = []; // Reset flags asked for this mission
+
+            updateGameUI(); // Update UI with initial mission stats
+            generateQuestion(); // Generate the first question
+        }
+
+        function updateGameUI() {
+            scoreDisplayElement.textContent = score;
+            livesDisplay.textContent = lives;
+            if (lives <= 1) {
+                livesDisplay.classList.add('low');
+            } else {
+                livesDisplay.classList.remove('low');
+            }
+            missionProgressDisplay.textContent = missionCorrectFlags;
+            missionTotalFlagsDisplay.textContent = currentMission.flagsRequired;
+            // During a quiz, the narrative text area will show the mission briefing.
+            narrativeTextDisplay.textContent = currentMission.briefing(agentName);
+        }
+
+        function generateQuestion() {
+            feedbackMessage.textContent = ''; // Clear previous feedback
+            feedbackMessage.classList.remove('feedback-correct', 'feedback-incorrect');
+            hasAnswered = false; // Allow user to answer
+
+            if (missionCorrectFlags >= currentMission.flagsRequired) {
+                showMissionOutcome(true); // Mission successful
+                return;
+            }
+            if (lives <= 0) {
+                showMissionOutcome(false); // Mission failed
+                return;
+            }
+
+            // Filter flags based on mission continent
+            let potentialFlags = [];
+            if (currentMission.continent === 'Any') {
+                potentialFlags = flags.filter(flag => !askedFlagsInMission.includes(flag.country));
+            } else if (Array.isArray(currentMission.continent)) {
+                potentialFlags = flags.filter(flag =>
+                    currentMission.continent.includes(flag.continent) && !askedFlagsInMission.includes(flag.country)
+                );
+            } else {
+                potentialFlags = flags.filter(flag =>
+                    flag.continent === currentMission.continent && !askedFlagsInMission.includes(flag.country)
+                );
+            }
+
+            // If we run out of unique flags for the mission, reset the asked pool for this mission
+            if (potentialFlags.length === 0) {
+                potentialFlags = flags.filter(flag => {
+                    const continentMatch = Array.isArray(currentMission.continent)
+                        ? currentMission.continent.includes(flag.continent)
+                        : flag.continent === currentMission.continent || currentMission.continent === 'Any';
+                    return continentMatch;
+                });
+                askedFlagsInMission = []; // Reset asked flags if pool exhausted for this mission
+            }
+            
+            // Handle case where there are still no flags (e.g., empty continent or very few flags)
+            if (potentialFlags.length === 0) {
+                // Fallback: use any flag if specific continent has no flags or all are asked
+                potentialFlags = flags.filter(flag => !askedFlagsInMission.includes(flag.country));
+                if (potentialFlags.length === 0) { // If all flags globally are asked, reset global pool
+                    potentialFlags = [...flags];
+                    askedFlagsInMission = [];
+                }
+            }
+
+
+            // Select a random flag for the question from the potential flags
+            currentQuestion = shuffleArray(potentialFlags)[0];
+            askedFlagsInMission.push(currentQuestion.country); // Mark as asked for this mission
+
+            flagImageElement.src = currentQuestion.url;
+            flagImageElement.alt = `Flag of ${currentQuestion.country}`;
+
+            let generatedOptions = [currentQuestion.country];
+
+            // Add 3 random incorrect countries, ensuring they are unique and not the correct answer
+            const allOtherFlags = flags.filter(f => f.country !== currentQuestion.country);
+            const shuffledOtherFlags = shuffleArray(allOtherFlags);
+
+            for (let i = 0; generatedOptions.length < 4 && i < shuffledOtherFlags.length; i++) {
+                const randomFlag = shuffledOtherFlags[i];
+                if (!generatedOptions.includes(randomFlag.country)) {
+                    generatedOptions.push(randomFlag.country);
+                }
+            }
+            
+            // If there aren't enough unique flags in the whole dataset for 4 options (unlikely with 200+ flags, but good for robustness)
+            while (generatedOptions.length < 4) {
+                const placeholderCountry = `Unknown Nation ${generatedOptions.length}`; // Fallback placeholder
+                if (!generatedOptions.includes(placeholderCountry)) {
+                    generatedOptions.push(placeholderCountry);
+                }
+            }
+
+
+            const shuffledOptions = shuffleArray(generatedOptions);
+
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+
+            // Create and append new option buttons
+            shuffledOptions.forEach(optionText => {
+                const button = document.createElement('button');
+                button.textContent = optionText;
+                button.classList.add('game-button', 'option-button');
+                button.addEventListener('click', () => checkAnswer(button, optionText));
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // --- Function to Check the Answer ---
+        function checkAnswer(selectedButton, selectedCountry) {
+            if (hasAnswered) return; // Prevent multiple clicks
+            hasAnswered = true; // Disable further clicks for this question
+
+            // Disable all option buttons immediately
+            Array.from(optionsContainer.children).forEach(button => {
+                button.disabled = true;
+            });
+
+            if (selectedCountry === currentQuestion.country) {
+                score++;
+                missionCorrectFlags++;
+                totalCorrectFlagsOverall++;
+                feedbackMessage.textContent = "Correct!";
+                feedbackMessage.classList.remove('feedback-incorrect');
+                feedbackMessage.classList.add('feedback-correct');
+                selectedButton.classList.add('correct-answer'); // Highlight correct button
+                
+            } else {
+                lives--;
+                totalIncorrectFlagsOverall++;
+                feedbackMessage.textContent = `Incorrect! It was ${currentQuestion.country}.`;
+                feedbackMessage.classList.remove('feedback-correct');
+                feedbackMessage.classList.add('feedback-incorrect');
+                selectedButton.classList.add('incorrect-selection'); // Highlight incorrect selected button
+
+                // Also highlight the correct answer
+                Array.from(optionsContainer.children).forEach(button => {
+                    if (button.textContent === currentQuestion.country) {
+                        button.classList.add('correct-answer');
+                    }
+                });
+            }
+
+            updateGameUI();
+
+            // Wait before moving to the next question or mission outcome
+            setTimeout(() => {
+                generateQuestion(); // This will check for mission success/failure
+            }, 1500); // 1.5 seconds delay
+        }
+
+        function showMissionOutcome(success) {
+            setScreen(missionOutcomeScreen);
+
+            if (success) {
+                missionOutcomeTitle.textContent = "Mission Accomplished!";
+                missionOutcomeText.textContent = currentMission.successMessage(agentName);
+                missionOutcomeButton.textContent = "Continue Assignment";
+                missionOutcomeButton.classList.remove('retry-button');
+                missionOutcomeButton.classList.add('next-button');
+                missionOutcomeButton.onclick = advanceMission;
+            } else {
+                missionOutcomeTitle.textContent = "Mission Failed!";
+                missionOutcomeText.textContent = currentMission.failureMessage(agentName);
+                missionOutcomeButton.textContent = "Retry Mission";
+                missionOutcomeButton.classList.remove('next-button');
+                missionOutcomeButton.classList.add('retry-button');
+                missionOutcomeButton.onclick = retryMission;
+            }
+        }
+
+        function advanceMission() {
+            currentMissionIndex++;
+            loadMission(); // Load the next mission (could be narrative or quiz briefing)
+        }
+
+        function retryMission() {
+            // No need to change mission index, just reload the current mission briefing
+            loadMission(); // This will re-show the briefing for the current mission
+        }
+
+        function showGameOverScreen() {
+            setScreen(gameOverScreen);
+            finalGameNarrative.textContent = missions[missions.length - 1].text(agentName); // Last narrative message
+            finalCorrectCount.textContent = totalCorrectFlagsOverall;
+            finalIncorrectCount.textContent = totalIncorrectFlagsOverall;
+        }
+
+        // --- Event Listeners ---
+        window.onload = function() {
+            initializeGame(); // Start by showing the initial credit screen
+        };
+
+        // Transition from initial credit screen to agent name input screen
+        proceedToIntroButton.addEventListener('click', () => {
+            showAgentNameInputScreen();
+        });
+
+        // Update agentName as user types
+        agentNameInput.addEventListener('input', () => {
+            const typedName = agentNameInput.value.trim();
+            agentName = typedName.length > 0 ? typedName : "Agent"; // Use "Agent" if input is empty
+            initialIntroText.textContent = `Welcome, Agent ${agentName}! The world faces a critical juncture. Your expertise is desperately needed.`;
+        });
+
+        startGameButton.addEventListener('click', () => {
+            // After entering agent name, load the main game intro narrative (missions[1])
+            currentMissionIndex = 1; // Index 1 is the 'intro' mission after credit
+            loadMission(); 
+        });
+
+        // This button is for the extended intro narrative
+        continueIntroButton.addEventListener('click', () => {
+            currentMissionIndex++; // Advance past the 'intro' narrative
+            loadMission(); // Load the next mission (which will be mission1's briefing)
+        });
+
+        // This button is on the dedicated mission briefing screen
+        startMissionButton.addEventListener('click', startQuizMission);
+
+        playAgainButton.addEventListener('click', initializeGame); // Go back to initial credit screen for new game
+    </script>
+</body>
+</html>
