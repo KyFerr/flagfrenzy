@@ -1,2 +1,2 @@
 # flagfrenzy
-A flag guessing ame
+A flag guessing game
