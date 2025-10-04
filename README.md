@@ -1,2 +1,2 @@
-# flagfrenzy
-A flag guessing game
+# Flag Frenzy - Global Agent
+Flag Frenzy: Global Agent is an immersive web app that transforms your knowledge of world flags into a high-stakes global operation. As a top-tier Global Agent, you’re the last line of defense against chaos — tasked with identifying flags to intercept threats, prevent international disasters, and protect the world’s most critical events. Every correct answer is a decisive move; every mistake risks tipping the balance. The mission is clear: Know the world. Save it.
