@@ -35,14 +35,12 @@ The game combines **geography knowledge**, **interactive UI**, and **narrative p
 - **CSS** – Custom styling, animations, and responsive design  
 - **JavaScript** – Game logic, state management, DOM manipulation  
 - **FlagCDN** – External flag image source
-- 
 ---
 
 ## 🧩 How It Works
 
 - A **mission system** controls game flow and narrative progression  
 - Flags are filtered dynamically by **continent** per mission  
-- **Fisher–Yates shuffle** ensures randomness  
 - Duplicate flags are prevented within missions  
 - UI screens switch dynamically (intro, briefing, gameplay, outcomes, game over)
 
