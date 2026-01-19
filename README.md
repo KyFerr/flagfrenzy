@@ -1,4 +1,4 @@
-🌍 Flag Frenzy - Global Agent 🌍
+🌍 **Flag Frenzy - Global Agent** 🌍
 
 **FlagFrenzy – Global Agent** is a story-driven, browser-based flag identification game where players take on the role of an elite global operative. Through a series of continent-based missions, players must correctly identify national flags to prevent global crises and restore international stability.
 
@@ -31,9 +31,9 @@ The game combines **geography knowledge**, **interactive UI**, and **narrative p
 
 ## 🛠️ Tech Stack
 
-- **HTML5** – Game structure and layout  
+- **HTML** – Game structure and layout  
 - **CSS** – Custom styling, animations, and responsive design  
-- **avaScript** – Game logic, state management, DOM manipulation  
+- **JavaScript** – Game logic, state management, DOM manipulation  
 - **FlagCDN** – External flag image source
 - 
 ---
