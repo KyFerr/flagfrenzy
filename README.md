@@ -1,4 +1,4 @@
-#🌍 Flag Frenzy - Global Agent 🌍
+🌍 Flag Frenzy - Global Agent 🌍
 
 **FlagFrenzy – Global Agent** is a story-driven, browser-based flag identification game where players take on the role of an elite global operative. Through a series of continent-based missions, players must correctly identify national flags to prevent global crises and restore international stability.
 
